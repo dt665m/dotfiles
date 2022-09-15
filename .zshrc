@@ -4,8 +4,9 @@ HISTFILE=~/.zsh_history
 
 # zsh functions and loading
 fpath=( ~/.zfuncs "${fpath[@]}" )
-autoload -Uz cb-remote 
+autoload -Uz cargo-build-remote 
 autoload -Uz cp-agence-remote
+autoload -Uz k8s-pod-bash 
 
 export EDITOR=nvim
 export GOPATH=$HOME/go
@@ -41,13 +42,16 @@ source '/opt/homebrew/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completi
 # fi
 
 # aliases
-alias git=hub
+alias git='hub'
 alias cat='bat'
 alias l='exa'
 alias la='exa -a'
 alias ll='exa -lah'
 alias ls='exa --color=auto'
 alias shfmt='shfmt -i 4'
+# zfunc aliases
+alias pbash='k8s-pod-bash'
+alias cb-remote='cargo-build-remote'
 eval "$(zoxide init zsh)"
 
 # handle theme
@@ -69,3 +73,7 @@ POWERLEVEL9K_MODE='nerdfont-complete'
 source /opt/homebrew/opt/powerlevel9k/powerlevel9k.zsh-theme
 
 export PATH="$PATH:/Users/denis/.foundry/bin"
+
+export WASMTIME_HOME="$HOME/.wasmtime"
+
+export PATH="$WASMTIME_HOME/bin:$PATH"

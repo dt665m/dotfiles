@@ -21,3 +21,8 @@ wget https://raw.githubusercontent.com/alacritty/alacritty/master/extra/alacritt
 ## NeoVim Details
 
 - FZF bindigs are done using FZF_DEFAULT_OPTS
+
+
+## TODO 
+- Fix nvim completion colors
+- fix tab completion (examples: 'h coc-completion-example')

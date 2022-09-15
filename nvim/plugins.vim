@@ -9,6 +9,7 @@ Plug 'pangloss/vim-javascript'
 Plug 'maxmellon/vim-jsx-pretty'
 Plug 'plasticboy/vim-markdown'
 Plug 'z0mbix/vim-shfmt', { 'for': 'sh' }
+Plug 'NoahTheDuke/vim-just'
 " Plug 'mhinz/vim-crates'
 
 " Coc (for now)

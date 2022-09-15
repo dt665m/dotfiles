@@ -103,9 +103,10 @@ install_tools() {
     require cargo
     require brew
 
-    brew install shfmt jq kubectx helm gh hub google-cloud-sdk visual-studio-code || true
+    brew tap kdash-rs/kdash
+    brew install protoc shfmt jq helm gh hub google-cloud-sdk visual-studio-code kdash || true
     cargo install --git https://github.com/paritytech/cachepot
-    cargo install wrangler cargo-remote zellij
+    cargo install wrangler cargo-remote zellij just cargo-wasi
 
     rm -rf ~/Library/Application\ Support/Code/User/keybindings.json
     rm -rf ~/Library/Application\ Support/Code/User/settings.json
