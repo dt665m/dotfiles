@@ -59,25 +59,23 @@ install_shell() {
     # install powerlevel9k and nerdfonts
     brew tap sambadevi/powerlevel9k
     brew tap homebrew/cask-fonts
-
-    brew install powerlevel9k || true
-    brew install font-meslo-lg-nerd-font || true
-    brew install font-fira-code-nerd-font || true
+    brew install powerlevel9k font-meslo-lg-nerd-font font-fira-code-nerd-font || true
 }
 
 install_neovim() {
-    brew install neovim || true
-    brew install ripgrep fzf || true
+    brew install neovim ripgrep fzf || true
     info "configuring neovim"
+
     mkdir -p ~/.config
     sym_link $ROOT_PATH/nvim ~/.config/nvim
+
     nvim --headless +PlugInstall +PlugClean +PlugUpdate +UpdateRemotePlugins +qall
     # undo history path
     mkdir -p ~/.vimdid
 }
 
 install_languages() {
-    brew install go node nvm yarn || true
+    brew install go lua node nvm yarn luarocks || true
 
     if ! which rustup >/dev/null 2>&1; then
         curl https://sh.rustup.rs -sSf | sh -s -- -y
@@ -95,6 +93,7 @@ install_languages() {
     else
         rustup update
     fi
+
     # custom global settings
     sym_link $ROOT_PATH/cargo-config.toml ~/.cargo/config.toml
 }
@@ -104,7 +103,8 @@ install_tools() {
     require brew
 
     brew tap kdash-rs/kdash
-    brew install protoc shfmt jq helm gh hub google-cloud-sdk visual-studio-code kdash || true
+    brew install protoc shfmt jq helm gh google-cloud-sdk visual-studio-code kdash || true
+
     cargo install --git https://github.com/paritytech/cachepot
     cargo install wrangler cargo-remote zellij just cargo-wasi
 

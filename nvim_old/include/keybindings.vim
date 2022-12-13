@@ -1,6 +1,6 @@
 " use ':verbose imap <{some_key}>' to check if a key is bound
 
-" Make spacebar to Leader
+" map `spacebar` to `Leader`
 noremap <space> <nop>
 let mapleader=" "
 
@@ -13,7 +13,7 @@ nnoremap <leader><leader> <C-^>
 " No arrow keys --- force yourself to use the home row
 nnoremap <up> <nop>
 nnoremap <down> <nop>
-" for CoC, editing up down is enabled
+" for CoC, editing up down is enabled so this is commented out
 " inoremap <up> <nop>
 " inoremap <down> <nop>
 inoremap <left> <nop>

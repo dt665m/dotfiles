@@ -15,7 +15,7 @@ runtime! include/coc.vim
 " ----------------------------
 
 if has('nvim')
-"    set guicursor=n-v-c:block-Cursor/lCursor-blinkon0,i-ci:ver25-Cursor/lCursor,r-cr:hor20-Cursor/lCursor
+    set guicursor=n-v-c:block-Cursor/lCursor-blinkon0,i-ci:ver25-Cursor/lCursor,r-cr:hor20-Cursor/lCursor
     set inccommand=nosplit
 end
 
@@ -35,18 +35,18 @@ set hidden                 " hides instead of closes buffers, important for plug
 set scrolloff=5
 set noshowmode             " Turns off Vim Mode Display because lightline plugin already handles it
 set number                 " shows absolute number at cursor
-set relativenumber
+set relativenumber         " shows number of lines relative to cursor 
 set colorcolumn=100 
 set signcolumn=yes         " Always draw sign column. Prevent buffer moving when adding/deleting sign.
 set showcmd                " Show (partial) command in status line.
 set mouse=a                " Enable mouse usage (all modes) in terminal
+set timeoutlen=500         " http://stackoverflow.com/questions/2158516/delay-before-o-opens-a-new-line
+set nojoinspaces           " https://stackoverflow.com/questions/1578951/why-does-vim-add-spaces-when-joining-lines
 
 " Make diffing better: https://vimways.org/2018/the-power-of-diff/
 set diffopt+=iwhite " No whitespace in vimdiff
 set diffopt+=algorithm:patience
 set diffopt+=indent-heuristic
-set timeoutlen=500 " http://stackoverflow.com/questions/2158516/delay-before-o-opens-a-new-line
-set nojoinspaces " https://stackoverflow.com/questions/1578951/why-does-vim-add-spaces-when-joining-lines
 
 " Nicer split panes
 set splitright
