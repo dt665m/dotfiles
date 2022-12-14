@@ -8,12 +8,12 @@ main() {
     get_arch
     ARCH="$RETVAL"
 
-    install_homebrew
-    install_terminal
-    install_shell
-    install_languages
+    #install_homebrew
+    #install_terminal
+    #install_shell
+    #install_languages
     install_neovim
-    install_tools
+    #install_tools
     setup_git
 }
 
@@ -46,9 +46,9 @@ install_shell() {
     brew install fd rg bat exa tmux grex zoxide zsh-completions || true
 
     # install and setup antibody zsh plugin bundler
-    brew install getantibody/tap/antibody || true
-    antibody bundle <.zsh_plugins.txt >~/.zsh_plugins.sh
-    antibody update
+    #brew install getantibody/tap/antibody || true
+    #antibody bundle <.zsh_plugins.txt >~/.zsh_plugins.sh
+    #antibody update
 
     mkdir -p ~/.config
     sym_link $ROOT_PATH/.zshrc ~/.zshrc
