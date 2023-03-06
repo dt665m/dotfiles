@@ -97,10 +97,12 @@ font:
         #   - (macOS) Menlo
         #   - (Linux/BSD) monospace
         #   - (Windows) Consolas
-        family: 'MesloLGM Nerd Font'
+        # family: 'MesloLGM Nerd Font'
+        family: 'FiraCode NFM'
 
         # The `style` can be specified to pick a specific face.
-        style: Regular
+        #style: Regular
+        style: Retina 
 
     # Bold font face
     bold:
@@ -458,6 +460,9 @@ key_bindings:
     - { key: K, mods: Alt, chars: "\x1bk" }
     - { key: L, mods: Alt, chars: "\x1bl" }
     - { key: I, mods: Alt, chars: "\x1bi" }
+    - { key: C, mods: Alt, chars: "\x1bc" }
+    # - { key: I, mods: Alt, chars: "\x1bi" }
+    # - { key: C, mods: Alt, chars: "\x1bi" }
     #
     # - { key: Space, mods: Control, chars: "\x1bb" }
 #  - { key: Left,   mods: Alt,           chars: "\x7b"              }

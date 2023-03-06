@@ -66,7 +66,7 @@ lspconfig.gopls.setup({
 })
 
 -- Lua Config
-lspconfig.sumneko_lua.setup({
+lspconfig.lua_ls.setup({
     on_attach = on_attach,
     settings =
     {
@@ -93,4 +93,10 @@ lspconfig.sumneko_lua.setup({
             }
         }
     }
+})
+
+-- TS Config
+lspconfig.tsserver.setup({
+    on_attach = on_attach,
+    filetypes = { "typescript", "typescriptreact", "typescript.tsx" },
 })

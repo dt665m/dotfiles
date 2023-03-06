@@ -8,120 +8,25 @@ main() {
     get_arch
     ARCH="$RETVAL"
 
+    #setup_git
     #install_homebrew
-    #install_terminal
-    #install_shell
     #install_languages
-    install_neovim
-    #install_tools
-    setup_git
-}
-
-install_homebrew() {
-    if ! which /opt/homebrew/bin/brew >/dev/null 2>&1; then
-        info "Installing homebrew"
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-    fi
-    eval $(/opt/homebrew/bin/brew shellenv)
-}
-
-install_terminal() {
-    # install alacritty terminal and terminfo
-    # #NOTE as of v0.9.0 release, M1 builds are not available through
-    # brew, so a manual clone of alacritty and 'make app', and copy to /Applications is required
-    brew install alacritty || true
-    ensure downloader https://raw.githubusercontent.com/alacritty/alacritty/master/extra/alacritty.info /Applications/Alacritty.app/Contents/Resources/alacritty.info
-    info "setting terminal tic, sudo required"
-    sudo tic -xe alacritty,alacritty-direct /Applications/Alacritty.app/Contents/Resources/alacritty.info
-    info "configuring terminal"
-    sym_link $ROOT_PATH/.alacritty.yml ~/.alacritty.yml
-    if [[ $ARCH == *"darwin"* ]] || [[ $ARCH == *"arm64"* ]]; then
-        info "macOs detected, 'open' alacritty in finder to seed permissions"
-        open /Applications
-    fi
-}
-
-install_shell() {
-    # install environment tools and languages
-    brew install fd rg bat exa tmux grex zoxide zsh-completions || true
-
-    # install and setup antibody zsh plugin bundler
-    #brew install getantibody/tap/antibody || true
-    #antibody bundle <.zsh_plugins.txt >~/.zsh_plugins.sh
-    #antibody update
-
-    mkdir -p ~/.config
-    sym_link $ROOT_PATH/.zshrc ~/.zshrc
-    sym_link $ROOT_PATH/.zfuncs ~/.zfuncs
-    sym_link $ROOT_PATH/zellij ~/.config/zellij
-    sym_link $ROOT_PATH/.tmux.conf ~/.tmux.conf
-
-    # install powerlevel9k and nerdfonts
-    brew tap sambadevi/powerlevel9k
-    brew tap homebrew/cask-fonts
-    brew install powerlevel9k font-meslo-lg-nerd-font font-fira-code-nerd-font || true
-}
-
-install_neovim() {
-    brew install neovim ripgrep fzf || true
-    info "configuring neovim"
-
-    mkdir -p ~/.config
-    sym_link $ROOT_PATH/nvim ~/.config/nvim
-
-    nvim --headless +PlugInstall +PlugClean +PlugUpdate +UpdateRemotePlugins +qall
-    # undo history path
-    mkdir -p ~/.vimdid
-}
-
-install_languages() {
-    brew install go lua node nvm yarn luarocks || true
-
-    if ! which rustup >/dev/null 2>&1; then
-        curl https://sh.rustup.rs -sSf | sh -s -- -y
-        eval $(cat ~/.cargo/env)
-
-        # Rust toolchains and commands
-        rustup default stable
-        rustup update nightly
-        rustup component add clippy
-        rustup target add aarch64-apple-ios x86_64-apple-ios aarch64-apple-darwin
-        rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android
-        rustup target add wasm32-unknown-unknown
-        rustup target add wasm32-unknown-unknown --toolchain nightly
-
-    else
-        rustup update
-    fi
-
-    # custom global settings
-    sym_link $ROOT_PATH/cargo-config.toml ~/.cargo/config.toml
-}
-
-install_tools() {
-    require cargo
-    require brew
-
-    brew tap kdash-rs/kdash
-    brew install protoc shfmt jq helm gh google-cloud-sdk visual-studio-code kdash || true
-
-    cargo install --git https://github.com/paritytech/cachepot
-    cargo install wrangler cargo-remote zellij just cargo-wasi
-
-    rm -rf ~/Library/Application\ Support/Code/User/keybindings.json
-    rm -rf ~/Library/Application\ Support/Code/User/settings.json
-    mkdir -p ~/Library/Application\ Support/Code/User
-    cp vscode/* ~/Library/Application\ Support/Code/User/
+    #install_shell
+    #install_terminal
+    install_tools
+    # #NOTE terminal installation needs to be partially manual until alacritty is updated in homebrew for M1's 
+    #install_neovim
 }
 
 setup_git() {
-    # git settings/aliases
     info "setting up git"
     git config --global alias.co checkout
     git config --global alias.br branch
     git config --global alias.com commit
     git config --global alias.st status
     git config --global credential.helper osxkeychain
+    git config --global http.postBuffer 157286400
+
     # Updated git requires a way to resolve divergent, this makes it so divergent branch pulls
     # will only fast foward.  A diveragent branch will fail.  A normal thing to do is to pull a
     # into your working copy, such as "git pull origin master".  A divergence can occur if the
@@ -136,6 +41,107 @@ setup_git() {
         git config --global user.name "$user_name"
         git config --global user.email "$user_email"
     fi
+}
+
+install_homebrew() {
+    if ! which /opt/homebrew/bin/brew >/dev/null 2>&1; then
+        info "Installing homebrew"
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+    fi
+    eval $(/opt/homebrew/bin/brew shellenv)
+}
+
+install_languages() {
+    brew install go lua node nvm yarn luarocks || true
+
+    if ! which rustup >/dev/null 2>&1; then
+        curl https://sh.rustup.rs -sSf | sh -s -- -y
+    	source ~/.cargo/env
+
+        # Rust toolchains and commands
+        rustup default stable
+        rustup update nightly
+        rustup component add clippy
+        rustup target add \
+            aarch64-apple-ios x86_64-apple-ios aarch64-apple-darwin \
+            aarch64-linux-android armv7-linux-androideabi i686-linux-android \
+            wasm32-wasi wasm32-unknown-unknown wasm32-unknown-unknown --toolchain nightly
+    else
+        rustup update
+    fi
+
+    # Rust specific tooling
+    cargo install --git https://github.com/paritytech/cachepot 
+    cargo install cargo-remote cargo-wasi
+
+    # Custom global settings, requires cachepot
+    sym_link $ROOT_PATH/cargo-config.toml ~/.cargo/config.toml
+}
+
+install_shell() {
+    # Settings for zsh plugins are in .zshrc
+    brew tap homebrew/cask-fonts
+    brew install \
+        zsh-syntax-highlighting zsh-autosuggestions \
+        romkatv/powerlevel10k/powerlevel10k \
+        font-meslo-lg-nerd-font font-fira-code-nerd-font || true
+
+    mkdir -p ~/.config
+    sym_link $ROOT_PATH/zsh/.zshrc ~/.zshrc
+    sym_link $ROOT_PATH/zsh/.zfuncs ~/.zfuncs
+    sym_link $ROOT_PATH/zsh/.zcustom ~/.zcustom
+}
+
+install_terminal() {
+    # install alacritty terminal and terminfo
+    # #NOTE as of v0.9.0 release, M1 builds are not available through
+    # brew, so a manual clone of alacritty and 'make app', and copy to /Applications is required
+    # brew install alacritty || true
+    ensure downloader https://raw.githubusercontent.com/alacritty/alacritty/master/extra/alacritty.info /Applications/Alacritty.app/Contents/Resources/alacritty.info
+    info "setting terminal tic, sudo required"
+    sudo tic -xe alacritty,alacritty-direct /Applications/Alacritty.app/Contents/Resources/alacritty.info
+    info "configuring terminal"
+    sym_link $ROOT_PATH/.alacritty.yml ~/.alacritty.yml
+    # if [[ $ARCH == *"darwin"* ]] || [[ $ARCH == *"arm64"* ]]; then
+    #     info "macOs detected, 'open' alacritty in finder to seed permissions"
+    #     open /Applications
+    # fi
+}
+
+install_neovim() {
+    brew install neovim || true
+    info "configuring neovim"
+
+    mkdir -p ~/.config
+    sym_link $ROOT_PATH/nvim ~/.config/nvim
+
+    nvim --headless +PlugInstall +PlugClean +PlugUpdate +UpdateRemotePlugins +qall
+    # undo history path
+    mkdir -p ~/.vimdid
+}
+
+install_tools() {
+    # brew tap kdash-rs/kdash
+    # brew install \
+    #     ripgrep fzf fd rg bat exa zoxide jq grex \
+    #     zellij just \
+    #     protobuf helm gh libpq google-cloud-sdk visual-studio-code \
+    #     kubectl kubectx kdash || true
+    # 
+    # # install google cloud components
+    # gcloud components install gke-gcloud-auth-plugin
+    #
+    # # VsCode... legacy
+    # mkdir -p ~/Library/Application\ Support/Code/User
+    # cp -rf vscode/* ~/Library/Application\ Support/Code/User/
+
+    sym_link $ROOT_PATH/zellij ~/.config/zellij
+    #sym_link $ROOT_PATH/.tmux.conf ~/.tmux.conf
+}
+
+uninstall_neovim() {
+    rm -rf ~/.cache/nvim
+    rm -rf ~/.local/share/nvim
 }
 
 ## Utils
