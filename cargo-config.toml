@@ -1,5 +1,8 @@
 [profile.dev]
 #split-debuginfo = "unpacked"
 
+[registries.crates-io]
+protocol = "sparse"
+
 [build]
-rustc-wrapper = "cachepot"
+rustc-wrapper = "sccache"

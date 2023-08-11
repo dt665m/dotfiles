@@ -1,3 +1,8 @@
+export NODE_OPTIONS=--openssl-legacy-provider
+export ANDROID_HOME=~/Library/Android/sdk
+export ANDROID_SDK_ROOT=~/Library/Android/sdk
+export ANDROID_AVD_HOME=~/.android/avd
+
 # zsh configuration, static plugins
 HISTFILE=~/.zsh_history
 SAVEHIST=10000

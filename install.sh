@@ -8,14 +8,14 @@ main() {
     get_arch
     ARCH="$RETVAL"
 
-    #setup_git
-    #install_homebrew
-    #install_languages
-    #install_shell
-    #install_terminal
+    setup_git
+    install_homebrew
+    install_languages
+    install_shell
+    install_terminal
     install_tools
     # #NOTE terminal installation needs to be partially manual until alacritty is updated in homebrew for M1's 
-    #install_neovim
+    install_neovim
 }
 
 setup_git() {
@@ -71,10 +71,9 @@ install_languages() {
     fi
 
     # Rust specific tooling
-    cargo install --git https://github.com/paritytech/cachepot 
-    cargo install cargo-remote cargo-wasi
+    cargo install --locked cargo-remote cargo-wasi sccache 
 
-    # Custom global settings, requires cachepot
+    # Custom global settings for sccache
     sym_link $ROOT_PATH/cargo-config.toml ~/.cargo/config.toml
 }
 
@@ -121,16 +120,16 @@ install_neovim() {
 }
 
 install_tools() {
-    # brew tap kdash-rs/kdash
-    # brew install \
-    #     ripgrep fzf fd rg bat exa zoxide jq grex \
-    #     zellij just \
-    #     protobuf helm gh libpq google-cloud-sdk visual-studio-code \
-    #     kubectl kubectx kdash || true
-    # 
-    # # install google cloud components
-    # gcloud components install gke-gcloud-auth-plugin
-    #
+    brew tap kdash-rs/kdash
+    brew install \
+        ripgrep fzf fd rg bat exa zoxide jq \
+        zellij just grex kondo tokei gh \
+        protobuf libpq google-cloud-sdk visual-studio-code \
+        kubectl kubectx kdash helm|| true
+
+    # install google cloud components
+    gcloud components install gke-gcloud-auth-plugin
+    
     # # VsCode... legacy
     # mkdir -p ~/Library/Application\ Support/Code/User
     # cp -rf vscode/* ~/Library/Application\ Support/Code/User/
