@@ -18,10 +18,13 @@ wget https://raw.githubusercontent.com/alacritty/alacritty/master/extra/alacritt
 ```
 
 ## GPG Keys
+https://gist.github.com/troyfontaine/18c9146295168ee9ca2b30c00bd1b41e
+
 ```sh
 # Export
 gpg --list-secret-keys --keyid-format LONG
 gpg -o private.gpg --export-options backup --export-secret-keys ${KEY_NAME}
+
 # Import
 gpg --import-options restore --import private.gpg
 gpg --edit-key ${KEY_NAME}
@@ -30,6 +33,9 @@ gpg> trust
 ```
 
 ## NeoVim Details
+
+- Look at kickstart.nvim to clean up the configuration a bit (good modern template)
+- lazyvim might also be another tool to look at
 
 ## TODO 
 - Linuxify the installer with the following strategy
@@ -44,3 +50,10 @@ one shown in the prompt.  For example, if the command was 'git push origin maste
 complete was 'git push origin master v0.12.2' and v0.12.2 isn't typed or selected, on pressing
 enter, it will appear as if the completion was executed but in fact it was not)
 - Find auto-complete for relative path typing in nvim
+- instead of vim-rooter maybe use https://github.com/ahmedkhalf/project.nvim
+
+- Migrate Packer to Lazy.nvim
+    - [example from packer contributor?](https://github.com/wbthomason/dotfiles/blob/main/dot_config/nvim/init.lua)
+    - [lazy package manager](https://github.com/folke/lazy.nvim)
+    - [lazyvim starter](https://www.lazyvim.org/)
+    - [kickstart](https://github.com/nvim-lua/kickstart.nvim) (this has auto completion, which is still missing in current configuration)

@@ -74,7 +74,7 @@ return require("packer").startup({
             },
             {
                 "nvim-telescope/telescope.nvim",
-                tag = "0.1.0",
+                tag = "0.1.5",
                 requires = "nvim-lua/plenary.nvim",
                 config = require("dtvim.plugins.config.ui").telescope,
             },
@@ -87,12 +87,16 @@ return require("packer").startup({
             },
             {
                 "lukas-reineke/indent-blankline.nvim",
-                config = function()
-                    require("indent_blankline").setup {
-                        show_current_context = true,
-                        --show_current_context_start = true,
-                    }
-                end,
+                main = "ibl",
+                opts = {
+                    show_current_context = true,
+                }
+                -- config = function()
+                --     require("ibl").setup {
+                --         show_current_context = true,
+                --         --show_current_context_start = true,
+                --     }
+                -- end,
             }
         })
 

@@ -1,6 +1,8 @@
-export NODE_OPTIONS=--openssl-legacy-provider
+export GPG_TTY=$(tty)
+export GOOGLE_PROJECT_ID=aetheras-restic
+export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/gcloud/application_default_credentials.json
 export ANDROID_HOME=~/Library/Android/sdk
-export ANDROID_SDK_ROOT=~/Library/Android/sdk
+export ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk/26.1.10909125
 export ANDROID_AVD_HOME=~/.android/avd
 
 # zsh configuration, static plugins
@@ -20,8 +22,9 @@ done
 
 # #TODO figure out why these two settings are screwing with zellij
 # Environment / Global Settings
-#export EDITOR=vim
+export EDITOR=nvim
 export KUBE_EDITOR=nvim
+
 # Vim Mods https://dev.to/matrixersp/how-to-use-fzf-with-ripgrep-to-selectively-ignore-vcs-files-4e27 
 export FZF_DEFAULT_COMMAND="rg --files --hidden --follow --glob '!.git'"
 
@@ -61,9 +64,10 @@ zstyle ":completion:*" matcher-list "" "m:{a-zA-Z}={A-Za-z}" "r:|=*" "l:|=* r:|=
 autoload -Uz compinit && compinit
 
 # Key bindings 
+bindkey -e #remove vim mode?
 bindkey "^ " autosuggest-accept
-bindkey "^[[1;3D" backward-word
-bindkey "^[[1;3C" forward-word
+# bindkey "^[[1;3D" backward-word
+# bindkey "^[[1;3C" forward-word
 # bindkey "^[a" beginning-of-line
 # bindkey "^[e" end-of-line
 
@@ -72,7 +76,7 @@ alias g="git"
 alias j="just"
 alias cat="bat -pp --theme 'Visual Studio Dark+'"
 alias catt="bat --theme 'Visual Studio Dark+'"
-alias ls="exa --group-directories-first --icons"
+alias ls="eza --group-directories-first --icons=auto"
 alias ll="ls -l --git"
 alias la="ll -a"
 
@@ -83,8 +87,8 @@ alias cb-remote="cargo-build-remote"
 eval "$(zoxide init zsh)"
 
 # handle theme
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(os_icon dir go_version rust_version nix_shell vcs)
-POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status root_indicator history background_jobs ram load time)
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(os_icon dir go_version rust_version vcs)
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status root_indicator background_jobs ram load time)
 POWERLEVEL9K_PROMPT_ADD_NEWLINE=true
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 POWERLEVEL9K_RPROMPT_ON_NEWLINE=true

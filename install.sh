@@ -71,7 +71,8 @@ install_languages() {
     fi
 
     # Rust specific tooling
-    cargo install --locked cargo-remote cargo-wasi sccache 
+    cargo install --locked cargo-remote cargo-wasi sccache cargo-about git-cliff
+    cargo install --locked cargo-duplicates cargo-outdated
 
     # Custom global settings for sccache
     sym_link $ROOT_PATH/cargo-config.toml ~/.cargo/config.toml
@@ -100,7 +101,7 @@ install_terminal() {
     info "setting terminal tic, sudo required"
     sudo tic -xe alacritty,alacritty-direct /Applications/Alacritty.app/Contents/Resources/alacritty.info
     info "configuring terminal"
-    sym_link $ROOT_PATH/.alacritty.yml ~/.alacritty.yml
+    sym_link $ROOT_PATH/.alacritty.toml ~/.alacritty.toml
     # if [[ $ARCH == *"darwin"* ]] || [[ $ARCH == *"arm64"* ]]; then
     #     info "macOs detected, 'open' alacritty in finder to seed permissions"
     #     open /Applications
