@@ -3,6 +3,7 @@ keybinds clear-defaults=true {
     normal {
         // uncomment this and adjust key if using copy_on_select=false
         // bind "Alt c" { Copy; }
+        unbind "Ctrl o"
     }
     locked clear-defaults=true {
         bind "Ctrl g" { SwitchToMode "Normal"; }

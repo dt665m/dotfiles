@@ -3,6 +3,7 @@
 local lspconfig = require("lspconfig")
 local util = require("lspconfig/util")
 local opts = { noremap = true, silent = true }
+
 vim.keymap.set('n', '<space>e', vim.diagnostic.open_float, opts)
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, opts)
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
@@ -33,6 +34,17 @@ local on_attach = function(_, bufnr)
     vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
     vim.keymap.set('n', '<space>f', function() vim.lsp.buf.format { async = true } end, bufopts)
 end
+
+-- lspconfig.rustaceanvim.setup({
+--     on_attach = function(client, bufnr)
+--         -- bootstrap basics
+--         on_attach(client, bufnr)
+--         -- Hover actions
+--         vim.keymap.set("n", "<C-space>", rt.hover_actions.hover_actions, { buffer = bufnr })
+--         -- Code action groups
+--         vim.keymap.set("n", "<Leader>a", rt.code_action_group.code_action_group, { buffer = bufnr })
+--     end
+-- })
 
 -- Rust Config using https://github.com/simrat39/rust-tools.nvim
 local rt = require("rust-tools")

@@ -1,9 +1,6 @@
 export GPG_TTY=$(tty)
 export GOOGLE_PROJECT_ID=aetheras-restic
 export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/gcloud/application_default_credentials.json
-export ANDROID_HOME=~/Library/Android/sdk
-export ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk/26.1.10909125
-export ANDROID_AVD_HOME=~/.android/avd
 
 # zsh configuration, static plugins
 HISTFILE=~/.zsh_history
@@ -102,7 +99,7 @@ POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX="%{%F{249}%}\u2517\uf054%{%F{default}%
 # POWERLEVEL9K_MULTILINE_FIRST_PROMPT_PREFIX="%f"
 #POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX="%{%B%F{black}%K{yellow}%} "$"%{%b%f%k%F{yellow}%} %{%f%}"
 POWERLEVEL9K_MODE="nerdfont-complete"
-source /opt/homebrew/opt/powerlevel10k/powerlevel10k.zsh-theme
+source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 
 export WASMTIME_HOME="$HOME/.wasmtime"
 export PATH="$PATH:/$WASMTIME_HOME/bin"
@@ -110,3 +107,6 @@ export PATH="$PATH:/Users/denis/.foundry/bin"
 # temporary... alacritty is really lagging with updates
 export PATH="$PATH:/Applications/Alacritty.app/Contents/MacOS"
 export PATH="$PATH:/opt/homebrew/opt/libpq/bin"
+export ANDROID_HOME=~/Library/Android/sdk
+export ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk/26.1.10909125
+export ANDROID_AVD_HOME=~/.android/avd

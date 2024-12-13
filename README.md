@@ -32,10 +32,13 @@ gpg> trust
      5 I trust ultimately <--
 ```
 
-## NeoVim Details
+## NeoVim Fixing
 
-- Look at kickstart.nvim to clean up the configuration a bit (good modern template)
-- lazyvim might also be another tool to look at
+- catppuccin background black making things unreadable
+- find a use case for <leader><space>
+- add the 100line line
+- figure out how to disable spellchecking or at least be able to use it
+- snippets are making things weird sometimes (like the next line skips)
 
 ## TODO 
 - Linuxify the installer with the following strategy
@@ -57,3 +60,4 @@ enter, it will appear as if the completion was executed but in fact it was not)
     - [lazy package manager](https://github.com/folke/lazy.nvim)
     - [lazyvim starter](https://www.lazyvim.org/)
     - [kickstart](https://github.com/nvim-lua/kickstart.nvim) (this has auto completion, which is still missing in current configuration)
+    - https://github.com/mfussenegger/nvim-dap
