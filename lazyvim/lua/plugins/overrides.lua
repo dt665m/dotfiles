@@ -30,7 +30,7 @@ return {
   },
 
   {
-    "catppuccin/nvim",
+    "catppuccin",
     opts = {
       background = { light = "latte", dark = "mocha" },
       styles = {
