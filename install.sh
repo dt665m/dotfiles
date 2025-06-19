@@ -116,6 +116,7 @@ install_shell() {
   sym_link $ROOT_PATH/zsh/.zshrc ~/.zshrc
   sym_link $ROOT_PATH/zsh/.zfuncs ~/.zfuncs
   sym_link $ROOT_PATH/zsh/.zcustom ~/.zcustom
+  sym_link $ROOT_PATH/zsh/.ignore_global ~/.ignore_global
 }
 
 install_tools() {

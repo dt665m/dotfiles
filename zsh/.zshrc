@@ -1,6 +1,7 @@
 export GPG_TTY=$(tty)
 export GOOGLE_PROJECT_ID=aetheras-restic
 export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/gcloud/application_default_credentials.json
+export RIPGREP_IGNORE_FILE=$HOME/.ignore_global
 
 # zsh configuration, static plugins
 HISTFILE=~/.zsh_history
@@ -107,6 +108,7 @@ export PATH="$PATH:/Users/denis/.foundry/bin"
 # temporary... alacritty is really lagging with updates
 export PATH="$PATH:/Applications/Alacritty.app/Contents/MacOS"
 export PATH="$PATH:/opt/homebrew/opt/libpq/bin"
+export PATH="$PATH:/Users/dt665m/.local/bin"
 export ANDROID_HOME=~/Library/Android/sdk
 export ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk/26.1.10909125
 export ANDROID_AVD_HOME=~/.android/avd
