@@ -79,7 +79,7 @@ install_homebrew() {
 }
 
 install_languages() {
-  brew install go lua node nvm yarn luarocks || true
+  brew install go lua node nvm pnpm luarocks || true
 
   if ! which rustup >/dev/null 2>&1; then
     curl https://sh.rustup.rs -sSf | sh -s -- -y

@@ -19,6 +19,9 @@ return {
       server = {
         default_settings = {
           ["rust-analyzer"] = {
+            procMacro = {
+              enable = true,
+            },
             inlayHints = {
               parameterHints = false,
               typeHints = false,

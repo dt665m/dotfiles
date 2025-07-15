@@ -127,3 +127,6 @@ else
 fi
 unset __conda_setup
 # <<< conda initialize <<<
+
+# opencode
+export PATH=/Users/dt665m/.opencode/bin:$PATH
