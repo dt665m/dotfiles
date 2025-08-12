@@ -1,75 +1,113 @@
+##### Environment ################################################################
+
 export GPG_TTY=$(tty)
-export GOOGLE_PROJECT_ID=aetheras-restic
-export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/gcloud/application_default_credentials.json
-export RIPGREP_IGNORE_FILE=$HOME/.ignore_global
+# export GOOGLE_PROJECT_ID=aetheras-restic
+export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcloud/application_default_credentials.json"
 
-# zsh configuration, static plugins
-HISTFILE=~/.zsh_history
-SAVEHIST=10000
-HISTSIZE=50000
-setopt extended_history       # record timestamp of command in HISTFILE
-setopt hist_expire_dups_first # delete duplicates first when HISTFILE size exceeds HISTSIZE
-setopt hist_ignore_dups       # ignore duplicated commands history list
-setopt hist_verify            # show command with history expansion to user before running it
-setopt share_history          # share command history data
+# Use ripgrep config instead of RIPGREP_IGNORE_FILE hacks.
+# Create ~/.ripgreprc with your prefs (see note below).
+# export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
 
-# load custom zsh things
-for file in ~/.zcustom/*.zsh; do
-    source "$file"
-done
-
-# #TODO figure out why these two settings are screwing with zellij
-# Environment / Global Settings
+# Editors
 export EDITOR=nvim
 export KUBE_EDITOR=nvim
 
-# Vim Mods https://dev.to/matrixersp/how-to-use-fzf-with-ripgrep-to-selectively-ignore-vcs-files-4e27 
-export FZF_DEFAULT_COMMAND="rg --files --hidden --follow --glob '!.git'"
+# Android
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export ANDROID_NDK_ROOT="${ANDROID_HOME}/ndk/26.1.10909125"
+export ANDROID_AVD_HOME="$HOME/.android/avd"
 
-# Add Homebrew Prefixes as exports and homebrew path to $PATH
-eval $(/opt/homebrew/bin/brew shellenv)
+# Wasmtime
+export WASMTIME_HOME="$HOME/.wasmtime"
 
-# PLUGINS (manually installed)
-local FZF_HOME=$HOMEBREW_PREFIX/opt/fzf
-[ -f $FZF_HOME/shell/completion.zsh ] && source $FZF_HOME/shell/completion.zsh
-[ -f $FZF_HOME/shell/key-bindings.zsh ] && source $FZF_HOME/shell/key-bindings.zsh
+##### History ####################################################################
 
-local ZSH_HIGH_HOME=$HOMEBREW_PREFIX/share/zsh-syntax-highlighting
-[ -f $ZSH_HIGH_HOME/zsh-syntax-highlighting.zsh ] && source $ZSH_HIGH_HOME/zsh-syntax-highlighting.zsh
+HISTFILE="$HOME/.zsh_history"
+SAVEHIST=10000
+HISTSIZE=50000
 
-local ZSH_AUTO=$HOMEBREW_PREFIX/share/zsh-autosuggestions
-[ -f $ZSH_AUTO/zsh-autosuggestions.zsh ] && source $ZSH_AUTO/zsh-autosuggestions.zsh
+setopt extended_history
+setopt hist_expire_dups_first
+setopt hist_ignore_dups
+setopt hist_ignore_all_dups
+setopt hist_reduce_blanks
+setopt hist_verify
+setopt inc_append_history
+# share_history can interleave from multiple shells; enable only if you want that:
+#setopt share_history
 
-# Shell Completions and Custom zsh functions 
-# in case of complaints:  https://github.com/zsh-users/zsh-completions/issues/680#issuecomment-612960481
-fpath=( 
-    ~/.zfuncs 
-    $HOMEBREW_PREFIX/share/zsh/site-functions
-    "${fpath[@]}" 
-)
-autoload -Uz b64hex 
-autoload -Uz cargo-build-remote 
-autoload -Uz cp-agence-remote
-autoload -Uz k8s-pod-bash 
-autoload -Uz k8s-pod-forcedelete 
+##### Load custom zsh snippets ####################################################
 
-#source <(kubectl completion zsh)
-source '/opt/homebrew/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc'
-source '/opt/homebrew/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc'
-# allow case-insensitive etc. can copy this later https://github.com/ohmyzsh/ohmyzsh/blob/master/lib/completion.zsh
+for file in "$HOME/.zcustom"/*.zsh(.N); do
+  source "$file"
+done
+
+##### Homebrew ###################################################################
+
+if command -v brew >/dev/null 2>&1; then
+  eval "$("$(command -v brew)" shellenv)"
+  HOMEBREW_PREFIX="$(brew --prefix)"
+fi
+
+##### Plugins (manual installs via Homebrew) #####################################
+
+# fzf
+if [ -n "${HOMEBREW_PREFIX:-}" ]; then
+  FZF_HOME="$HOMEBREW_PREFIX/opt/fzf"
+  [ -r "$FZF_HOME/shell/completion.zsh" ] && source "$FZF_HOME/shell/completion.zsh"
+  [ -r "$FZF_HOME/shell/key-bindings.zsh" ] && source "$FZF_HOME/shell/key-bindings.zsh"
+
+  # zsh-syntax-highlighting
+  ZSH_HIGH_HOME="$HOMEBREW_PREFIX/share/zsh-syntax-highlighting"
+  [ -r "$ZSH_HIGH_HOME/zsh-syntax-highlighting.zsh" ] && source "$ZSH_HIGH_HOME/zsh-syntax-highlighting.zsh"
+
+  # zsh-autosuggestions
+  ZSH_AUTO="$HOMEBREW_PREFIX/share/zsh-autosuggestions"
+  [ -r "$ZSH_AUTO/zsh-autosuggestions.zsh" ] && source "$ZSH_AUTO/zsh-autosuggestions.zsh"
+fi
+
+##### zfuncs (autoload everything in ~/.zfuncs) ##################################
+
+fpath=("$HOME/.zfuncs" $fpath)
+typeset -U fpath  # de-dupe fpath
+
+# autoload every regular file in ~/.zfuncs
+for f in "$HOME/.zfuncs"/*(.N:t); do
+  autoload -Uz -- "$f"
+done
+
+##### Completions ################################################################
+
+# (in case of complaints: https://github.com/zsh-users/zsh-completions/issues/680#issuecomment-612960481)
+if [ -n "${HOMEBREW_PREFIX:-}" ]; then
+  fpath=("$HOMEBREW_PREFIX/share/zsh/site-functions" $fpath)
+fi
+
 zstyle ":completion:*" menu yes select
 zstyle ":completion:*" matcher-list "" "m:{a-zA-Z}={A-Za-z}" "r:|=*" "l:|=* r:|=*"
 autoload -Uz compinit && compinit
 
-# Key bindings 
-bindkey -e #remove vim mode?
-bindkey "^ " autosuggest-accept
-# bindkey "^[[1;3D" backward-word
-# bindkey "^[[1;3C" forward-word
-# bindkey "^[a" beginning-of-line
-# bindkey "^[e" end-of-line
+##### Google Cloud SDK ############################################################
 
-# aliases
+if [ -n "${HOMEBREW_PREFIX:-}" ]; then
+  GCP="$HOMEBREW_PREFIX/Caskroom/google-cloud-sdk/latest/google-cloud-sdk"
+  [ -r "$GCP/path.zsh.inc" ] && source "$GCP/path.zsh.inc"
+  [ -r "$GCP/completion.zsh.inc" ] && source "$GCP/completion.zsh.inc"
+fi
+
+##### FZF + ripgrep defaults #####################################################
+
+# Respect VCS ignore but include hidden (except .git), follow symlinks.
+# Extra ignores (like excluding Cargo.lock) live in ~/.ripgreprc.
+export FZF_DEFAULT_COMMAND="rg --files --hidden --follow --glob '!.git'"
+
+##### Key bindings ################################################################
+
+bindkey -e                      # emacs mode (no vim-mode)
+bindkey "^ " autosuggest-accept
+
+##### Aliases ####################################################################
+
 alias g="git"
 alias j="just"
 alias cat="bat -pp --theme 'Visual Studio Dark+'"
@@ -82,51 +120,51 @@ alias la="ll -a"
 alias kpbash="k8s-pod-bash"
 alias kpfd="k8s-pod-forcedelete"
 alias cb-remote="cargo-build-remote"
-eval "$(zoxide init zsh)"
 
-# handle theme
+# zoxide
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
+
+##### Prompt (powerlevel10k) #####################################################
+
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(os_icon dir go_version rust_version vcs)
 POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status root_indicator background_jobs ram load time)
 POWERLEVEL9K_PROMPT_ADD_NEWLINE=true
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 POWERLEVEL9K_RPROMPT_ON_NEWLINE=true
-
-# Visual customisation of the second prompt line
-# POWERLEVEL9K_MULTILINE_FIRST_PROMPT_PREFIX="╭"
-# POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX="╰\uF460\uF460\uF460 "
 POWERLEVEL9K_MULTILINE_FIRST_PROMPT_PREFIX="%{%F{249}%}\u250f"
 POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX="%{%F{249}%}\u2517\uf054%{%F{default}%} "
-
-# POWERLEVEL9K_MULTILINE_FIRST_PROMPT_PREFIX="%f"
-#POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX="%{%B%F{black}%K{yellow}%} "$"%{%b%f%k%F{yellow}%} %{%f%}"
 POWERLEVEL9K_MODE="nerdfont-complete"
-source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 
-export WASMTIME_HOME="$HOME/.wasmtime"
-export PATH="$PATH:/$WASMTIME_HOME/bin"
-export PATH="$PATH:/Users/denis/.foundry/bin"
-# temporary... alacritty is really lagging with updates
-export PATH="$PATH:/Applications/Alacritty.app/Contents/MacOS"
-export PATH="$PATH:/opt/homebrew/opt/libpq/bin"
-export PATH="$PATH:/Users/dt665m/.local/bin"
-export ANDROID_HOME=~/Library/Android/sdk
-export ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk/26.1.10909125
-export ANDROID_AVD_HOME=~/.android/avd
-
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/opt/homebrew/anaconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
+# Use brew path if available
+if [ -n "${HOMEBREW_PREFIX:-}" ] && [ -r "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme" ]; then
+  source "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme"
 else
-    if [ -f "/opt/homebrew/anaconda3/etc/profile.d/conda.sh" ]; then
-        . "/opt/homebrew/anaconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/opt/homebrew/anaconda3/bin:$PATH"
-    fi
+  # Fallback path
+  [ -r /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme ] && source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 fi
-unset __conda_setup
-# <<< conda initialize <<<
 
-# opencode
-export PATH=/Users/dt665m/.opencode/bin:$PATH
+##### PATH (use the array; de-dup; keep things tidy) #############################
+
+path=(
+  /opt/homebrew/opt/libpq/bin
+  "$HOME/.local/bin"
+  "$HOME/.foundry/bin"
+  "$HOME/.opencode/bin"
+  "$WASMTIME_HOME/bin"
+  /Applications/Alacritty.app/Contents/MacOS   # temporary; GUI app bundle bin
+  $path
+)
+typeset -U path
+export PATH
+
+##### Conda (lazy init to avoid heavy startup) ###################################
+
+conda() {
+  unset -f conda
+  if [ -r "/opt/homebrew/anaconda3/etc/profile.d/conda.sh" ]; then
+    . "/opt/homebrew/anaconda3/etc/profile.d/conda.sh"
+  else
+    export PATH="/opt/homebrew/anaconda3/bin:$PATH"
+  fi
+  conda "$@"
+}

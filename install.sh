@@ -98,7 +98,7 @@ install_languages() {
   fi
 
   # Rust specific tooling
-  cargo install --locked cargo-remote cargo-wasi sccache cargo-about git-cliff
+  cargo install --locked cargo-wasi sccache cargo-about git-cliff
   cargo install --locked cargo-duplicates cargo-outdated
 
   # Custom global settings for sccache
@@ -116,7 +116,6 @@ install_shell() {
   sym_link $ROOT_PATH/zsh/.zshrc ~/.zshrc
   sym_link $ROOT_PATH/zsh/.zfuncs ~/.zfuncs
   sym_link $ROOT_PATH/zsh/.zcustom ~/.zcustom
-  sym_link $ROOT_PATH/zsh/.ignore_global ~/.ignore_global
 }
 
 install_tools() {
@@ -125,7 +124,7 @@ install_tools() {
     ripgrep fzf fd rg bat eza zoxide jq \
     zellij just grex kondo tokei gh lazygit \
     protobuf libpq google-cloud-sdk visual-studio-code \
-    kubectl kubectx kdash helm || true
+    kubectl kubectx kdash || true
 
   # install google cloud components
   gcloud components install gke-gcloud-auth-plugin

@@ -1,0 +1,66 @@
+#!/usr/bin/env sh
+# git-br-prune [Nd|Nw|Nm]
+# Defaults to 1m (1 month). Respects DRY_RUN=true.
+
+set -eu
+
+# ---- config ---------------------------------------------------------------
+REMOTE="${REMOTE:-origin}"
+PROTECT_REGEX="${PROTECT_REGEX:-^(origin/HEAD|origin/(master|staging|infradev))$}"
+ARG="${1:-1m}"
+# --------------------------------------------------------------------------
+
+# Parse Nd/Nw/Nm -> "N day(s)/week(s)/month(s) ago"
+num=${ARG%[mwd]}      # strip the last char
+unit=${ARG#$num}      # the last char (m|w|d)
+
+case "$unit" in
+  m|w|d) : ;;
+  *) echo "Usage: $(basename "$0") [Nd|Nw|Nm]  (e.g., 10d, 2w, 1m). Default: 1m" >&2; exit 2 ;;
+esac
+
+# Ensure $num is an integer
+case "$num" in
+  ''|*[!0-9]*) echo "Invalid amount: '$ARG' — use like 10d, 2w, 1m" >&2; exit 2 ;;
+esac
+
+# Build a --since string git understands
+case "$unit" in
+  d) word="day" ;;
+  w) word="week" ;;
+  m) word="month" ;;
+esac
+[ "$num" -eq 1 ] || word="${word}s"
+SINCE="${num} ${word} ago"
+
+# Get remote branches (short names) under $REMOTE, excluding protected ones
+branches=$(
+  git for-each-ref "refs/remotes/${REMOTE}" --format='%(refname:short)' \
+  | grep -Ev "$PROTECT_REGEX" || true
+)
+
+# Nothing to do?
+[ -n "$branches" ] || { echo "No candidate remote branches under ${REMOTE}."; exit 0; }
+
+echo "Scanning ${REMOTE} branches inactive since: ${SINCE}"
+
+# Read line-by-line safely
+printf '%s\n' "$branches" | while IFS= read -r branch; do
+  # Skip weird entries just in case
+  [ -n "$branch" ] || continue
+
+  # Any commits on that remote branch within the time window?
+  recent_count=$(git log --since "$SINCE" -- "$branch" | wc -l | tr -d '[:space:]')
+  if [ "$recent_count" -eq 0 ]; then
+    remote_branch=${branch#${REMOTE}/}
+    if [ "${DRY_RUN:-}" = "true" ]; then
+      echo "[DRY_RUN] Would delete remote branch: ${branch}"
+    else
+      echo "Deleting remote branch: ${branch}"
+      git push "$REMOTE" --delete "$remote_branch"
+    fi
+  fi
+done
+
+# Clean up any refs for deleted branches
+git fetch --prune "$REMOTE"
