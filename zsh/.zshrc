@@ -4,10 +4,6 @@ export GPG_TTY=$(tty)
 # export GOOGLE_PROJECT_ID=aetheras-restic
 export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcloud/application_default_credentials.json"
 
-# Use ripgrep config instead of RIPGREP_IGNORE_FILE hacks.
-# Create ~/.ripgreprc with your prefs (see note below).
-# export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
-
 # Editors
 export EDITOR=nvim
 export KUBE_EDITOR=nvim
@@ -32,38 +28,50 @@ setopt hist_ignore_dups
 setopt hist_ignore_all_dups
 setopt hist_reduce_blanks
 setopt hist_verify
+setopt extended_glob
 setopt inc_append_history
-# share_history can interleave from multiple shells; enable only if you want that:
-#setopt share_history
+# setopt share_history   # enable only if you want interleaved history across shells
+
+##### Homebrew (bootstrap early; absolute paths; idempotent) #####################
+
+# Seed PATH first so brew is callable even if path_helper clobbered it.
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  export HOMEBREW_PREFIX=/opt/homebrew
+  path=( /opt/homebrew/bin /opt/homebrew/sbin $path )
+  typeset -U path
+  export PATH
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+  export HOMEBREW_PREFIX=/usr/local
+  path=( /usr/local/bin /usr/local/sbin $path )
+  typeset -U path
+  export PATH
+  eval "$(/usr/local/bin/brew shellenv)"
+else
+  unset HOMEBREW_PREFIX
+  # Optional: echo a hint in interactive shells if brew isn’t installed yet.
+  [[ -t 1 ]] && print -r -- "Homebrew not found (ok if install.sh will install it)."
+fi
 
 ##### Load custom zsh snippets ####################################################
 
-for file in "$HOME/.zcustom"/*.zsh(.N); do
-  source "$file"
-done
-
-##### Homebrew ###################################################################
-
-if command -v brew >/dev/null 2>&1; then
-  eval "$("$(command -v brew)" shellenv)"
-  HOMEBREW_PREFIX="$(brew --prefix)"
-fi
+[[ -d $HOME/.zcustom ]] && for file in $HOME/.zcustom/*.zsh(.N); do source "$file"; done
 
 ##### Plugins (manual installs via Homebrew) #####################################
 
-# fzf
-if [ -n "${HOMEBREW_PREFIX:-}" ]; then
+if [[ -n ${HOMEBREW_PREFIX:-} ]]; then
+  # fzf
   FZF_HOME="$HOMEBREW_PREFIX/opt/fzf"
-  [ -r "$FZF_HOME/shell/completion.zsh" ] && source "$FZF_HOME/shell/completion.zsh"
-  [ -r "$FZF_HOME/shell/key-bindings.zsh" ] && source "$FZF_HOME/shell/key-bindings.zsh"
+  [[ -r "$FZF_HOME/shell/completion.zsh" ]] && source "$FZF_HOME/shell/completion.zsh"
+  [[ -r "$FZF_HOME/shell/key-bindings.zsh" ]] && source "$FZF_HOME/shell/key-bindings.zsh"
 
   # zsh-syntax-highlighting
   ZSH_HIGH_HOME="$HOMEBREW_PREFIX/share/zsh-syntax-highlighting"
-  [ -r "$ZSH_HIGH_HOME/zsh-syntax-highlighting.zsh" ] && source "$ZSH_HIGH_HOME/zsh-syntax-highlighting.zsh"
+  [[ -r "$ZSH_HIGH_HOME/zsh-syntax-highlighting.zsh" ]] && source "$ZSH_HIGH_HOME/zsh-syntax-highlighting.zsh"
 
   # zsh-autosuggestions
   ZSH_AUTO="$HOMEBREW_PREFIX/share/zsh-autosuggestions"
-  [ -r "$ZSH_AUTO/zsh-autosuggestions.zsh" ] && source "$ZSH_AUTO/zsh-autosuggestions.zsh"
+  [[ -r "$ZSH_AUTO/zsh-autosuggestions.zsh" ]] && source "$ZSH_AUTO/zsh-autosuggestions.zsh"
 fi
 
 ##### zfuncs (autoload everything in ~/.zfuncs) ##################################
@@ -72,14 +80,11 @@ fpath=("$HOME/.zfuncs" $fpath)
 typeset -U fpath  # de-dupe fpath
 
 # autoload every regular file in ~/.zfuncs
-for f in "$HOME/.zfuncs"/*(.N:t); do
-  autoload -Uz -- "$f"
-done
+[[ -d $HOME/.zfuncs ]] && for f in $HOME/.zfuncs/*(.N:t); do autoload -Uz -- "$f"; done
 
 ##### Completions ################################################################
 
-# (in case of complaints: https://github.com/zsh-users/zsh-completions/issues/680#issuecomment-612960481)
-if [ -n "${HOMEBREW_PREFIX:-}" ]; then
+if [[ -n ${HOMEBREW_PREFIX:-} ]]; then
   fpath=("$HOMEBREW_PREFIX/share/zsh/site-functions" $fpath)
 fi
 
@@ -89,10 +94,10 @@ autoload -Uz compinit && compinit
 
 ##### Google Cloud SDK ############################################################
 
-if [ -n "${HOMEBREW_PREFIX:-}" ]; then
+if [[ -n ${HOMEBREW_PREFIX:-} ]]; then
   GCP="$HOMEBREW_PREFIX/Caskroom/google-cloud-sdk/latest/google-cloud-sdk"
-  [ -r "$GCP/path.zsh.inc" ] && source "$GCP/path.zsh.inc"
-  [ -r "$GCP/completion.zsh.inc" ] && source "$GCP/completion.zsh.inc"
+  [[ -r "$GCP/path.zsh.inc" ]] && source "$GCP/path.zsh.inc"
+  [[ -r "$GCP/completion.zsh.inc" ]] && source "$GCP/completion.zsh.inc"
 fi
 
 ##### FZF + ripgrep defaults #####################################################
@@ -136,11 +141,10 @@ POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX="%{%F{249}%}\u2517\uf054%{%F{default}%
 POWERLEVEL9K_MODE="nerdfont-complete"
 
 # Use brew path if available
-if [ -n "${HOMEBREW_PREFIX:-}" ] && [ -r "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme" ]; then
+if [[ -n ${HOMEBREW_PREFIX:-} ]] && [[ -r "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
   source "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme"
 else
-  # Fallback path
-  [ -r /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme ] && source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
+  [[ -r /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme ]] && source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 fi
 
 ##### PATH (use the array; de-dup; keep things tidy) #############################
@@ -161,7 +165,7 @@ export PATH
 
 conda() {
   unset -f conda
-  if [ -r "/opt/homebrew/anaconda3/etc/profile.d/conda.sh" ]; then
+  if [[ -r "/opt/homebrew/anaconda3/etc/profile.d/conda.sh" ]]; then
     . "/opt/homebrew/anaconda3/etc/profile.d/conda.sh"
   else
     export PATH="/opt/homebrew/anaconda3/bin:$PATH"

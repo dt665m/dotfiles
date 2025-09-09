@@ -13,26 +13,35 @@ return {
     },
   },
 
+  -- #HACK for https://github.com/LazyVim/LazyVim/pull/6354
+  {
+    "akinsho/bufferline.nvim",
+    init = function()
+      local bufline = require("catppuccin.groups.integrations.bufferline")
+      function bufline.get()
+        return bufline.get_theme()
+      end
+    end,
+  },
+
   {
     "mrcjkb/rustaceanvim",
     opts = function(_, opts)
       opts.server = opts.server or {}
       opts.server.settings = opts.server.settings or {}
-      opts.server.settings["rust-analyzer"] = opts.server.settings["rust-analyzer"] or {}
+      local ra = vim.tbl_deep_extend("force", opts.server.settings["rust-analyzer"] or {}, {
+        diagnostics = {
+          enable = true,
+          disabled = { "unresolved-proc-macro" },
+          experimental = { enable = true },
+        },
+        inlayHints = {
+          parameterHints = { enable = false },
+          typeHints = { enable = false },
+        },
+      })
 
-      -- ✅ Enable proc-macros
-      opts.server.settings["rust-analyzer"].procMacro = { enable = true }
-      opts.server.settings["rust-analyzer"].diagnostics = {
-        enable = true,
-        disabled = { "unresolved-proc-macro" },
-        enableExperimental = true,
-      }
-
-      -- ✅ Preserve your inlay hint config
-      opts.server.settings["rust-analyzer"].inlayHints = {
-        parameterHints = false,
-        typeHints = false,
-      }
+      opts.server.settings["rust-analyzer"] = ra
     end,
   },
 
