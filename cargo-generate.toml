@@ -1,0 +1,5 @@
+[favorites.rust-server]
+git = "https://github.com/aetheras-io/rust-template"
+vcs = "Git"
+init = true
+overwrite = false

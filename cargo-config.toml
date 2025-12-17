@@ -4,5 +4,5 @@
 [registries.crates-io]
 protocol = "sparse"
 
-[build]
-rustc-wrapper = "sccache"
+# [build]
+# rustc-wrapper = "sccache"

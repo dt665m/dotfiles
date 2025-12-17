@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage:
+#   docker_clean [--apply] keyword [keyword ...]
+#
+# Examples:
+#   docker_clean ybb bbc tradetioh petview          # dry run
+#   docker_clean --apply ybb bbc tradetioh petview  # actually delete
+
+APPLY=0
+if [[ "${1-}" == "--apply" ]]; then
+  APPLY=1
+  shift
+fi
+
+if [[ "$#" -lt 1 ]]; then
+  echo "Usage: $0 [--apply] keyword [keyword ...]" >&2
+  exit 1
+fi
+
+KEYWORDS=("$@")
+
+tmp_all_raw="$(mktemp)"
+tmp_all="$(mktemp)"
+tmp_keep_semver="$(mktemp)"
+tmp_keep_ids="$(mktemp)"
+tmp_all_ids="$(mktemp)"
+tmp_delete_ids="$(mktemp)"
+
+cleanup() {
+  rm -f "$tmp_all_raw" "$tmp_all" "$tmp_keep_semver" \
+    "$tmp_keep_ids" "$tmp_all_ids" "$tmp_delete_ids"
+}
+trap cleanup EXIT
+
+########################################
+# 1) Snapshot docker images ONCE
+########################################
+docker images --format '{{.Repository}} {{.Tag}} {{.ID}}' >"$tmp_all_raw"
+
+########################################
+# 2) Filter by keywords (repo contains kw)
+########################################
+>"$tmp_all"
+while read -r repo tag id; do
+  # skip untagged images
+  [[ "$tag" == "<none>" ]] && continue
+
+  for kw in "${KEYWORDS[@]}"; do
+    if [[ "$repo" == *"$kw"* ]]; then
+      printf '%s %s %s\n' "$repo" "$tag" "$id" >>"$tmp_all"
+      break
+    fi
+  done
+done <"$tmp_all_raw"
+
+if [[ ! -s "$tmp_all" ]]; then
+  echo "No images matched the given keywords." >&2
+  exit 0
+fi
+
+########################################
+# 3) Find newest semver tag per repo
+#    (vX.Y.Z or X.Y.Z)
+########################################
+grep -E ' [vV]?[0-9]+\.[0-9]+\.[0-9]+ ' "$tmp_all" |
+  awk '
+    {
+      repo = $1; tag = $2; id = $3;
+
+      t = tag;
+      sub(/^v/,"",t);
+      n = split(t, parts, ".");
+      if (n != 3) next;
+
+      major = parts[1] + 0;
+      minor = parts[2] + 0;
+      patch = parts[3] + 0;
+
+      key = sprintf("%09d.%09d.%09d", major, minor, patch);
+
+      if (!(repo in best_key) || key > best_key[repo]) {
+        best_key[repo] = key;
+        best_tag[repo] = tag;
+        best_id[repo]  = id;
+      }
+    }
+    END {
+      for (r in best_id) {
+        printf "%s %s %s\n", r, best_tag[r], best_id[r];
+      }
+    }
+  ' >"$tmp_keep_semver" || true
+
+########################################
+# 4) Build list of image IDs to keep
+#    - all :latest
+#    - newest semver per repo
+########################################
+>"$tmp_keep_ids"
+
+# keep all latest
+awk '$2 == "latest" {print $3}' "$tmp_all" >>"$tmp_keep_ids"
+
+# keep best semver ids
+if [[ -s "$tmp_keep_semver" ]]; then
+  awk '{print $3}' "$tmp_keep_semver" >>"$tmp_keep_ids"
+fi
+
+sort -u "$tmp_keep_ids" -o "$tmp_keep_ids"
+
+########################################
+# 5) Determine IDs to delete
+########################################
+awk '{print $3}' "$tmp_all" | sort -u >"$tmp_all_ids"
+comm -23 "$tmp_all_ids" "$tmp_keep_ids" >"$tmp_delete_ids"
+
+if [[ ! -s "$tmp_delete_ids" ]]; then
+  echo "Nothing to delete (only latest and newest semver present)." >&2
+  exit 0
+fi
+
+echo "Images that would be deleted:"
+while read -r id; do
+  grep " $id\$" "$tmp_all" || true
+done <"$tmp_delete_ids"
+echo
+
+if [[ "$APPLY" -eq 0 ]]; then
+  echo "[DRY RUN] Not deleting anything. Re-run with --apply to actually delete."
+  exit 0
+fi
+
+########################################
+# 6) Remove the images
+########################################
+echo "Removing images..."
+xargs -r docker rmi <"$tmp_delete_ids"
+echo "Done."

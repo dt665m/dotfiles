@@ -98,10 +98,12 @@ install_languages() {
     --toolchain nightly
 
   # Rust tooling
-  cargo install --locked cargo-wasi sccache cargo-about git-cliff cargo-duplicates cargo-outdated || true
+  cargo install --locked cargo-wasi sccache cargo-about git-cliff cargo-duplicates cargo-outdated cargo-generate || true
 
   # sccache config
   sym_link "$ROOT_PATH/cargo-config.toml" "$HOME/.cargo/config.toml"
+  # cargo-generate
+  sym_link "$ROOT_PATH/cargo-generate.toml" "$HOME/.cargo/cargo-generate.toml"
 }
 
 install_shell() {

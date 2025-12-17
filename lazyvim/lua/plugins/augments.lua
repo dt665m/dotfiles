@@ -28,7 +28,9 @@ return {
       }
 
       -- Super Tab
-      opts.mapping = vim.tbl_extend("force", opts.mapping, {
+      local mapping = opts.mapping or {}
+      ---@diagnostic disable-next-line: inject-field
+      opts.mapping = vim.tbl_extend("force", mapping, {
         ["<Tab>"] = cmp.mapping(function(fallback)
           if cmp.visible() then
             -- You could replace select_next_item() with confirm({ select = true }) to get VS Code autocompletion behavior
@@ -67,6 +69,37 @@ return {
           s = cmp.mapping.confirm({ select = true }),
           c = cmp.mapping.confirm({ behavior = cmp.ConfirmBehavior.Replace, select = true }),
         }),
+      })
+    end,
+  },
+
+  -- LazyVim v11+ ships with blink.cmp instead of nvim-cmp.
+  -- Mirror the old nvim-cmp behaviour: no preselect/auto-insert and <CR> only
+  -- accepts when you've explicitly picked an item (otherwise it makes a newline).
+  {
+    "saghen/blink.cmp",
+    opts = function(_, opts)
+      opts.completion = opts.completion or {}
+      opts.completion.list = vim.tbl_deep_extend("force", opts.completion.list or {}, {
+        selection = {
+          preselect = false,
+          auto_insert = false,
+        },
+      })
+
+      opts.keymap = vim.tbl_deep_extend("force", opts.keymap or {}, {
+        -- remove the default "enter" preset that auto-accepts on <CR>
+        preset = "default",
+        ["<Tab>"] = { "select_next", "fallback" },
+        ["<S-Tab>"] = { "select_prev", "fallback" },
+        ["<CR>"] = {
+          function(cmp)
+            if cmp.is_visible() and cmp.get_selected_item() then
+              return cmp.accept()
+            end
+          end,
+          "fallback",
+        },
       })
     end,
   },
