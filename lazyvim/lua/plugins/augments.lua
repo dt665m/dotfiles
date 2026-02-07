@@ -28,9 +28,7 @@ return {
       }
 
       -- Super Tab
-      local mapping = opts.mapping or {}
-      ---@diagnostic disable-next-line: inject-field
-      opts.mapping = vim.tbl_extend("force", mapping, {
+      opts.mapping = vim.tbl_extend("force", opts.mapping, {
         ["<Tab>"] = cmp.mapping(function(fallback)
           if cmp.visible() then
             -- You could replace select_next_item() with confirm({ select = true }) to get VS Code autocompletion behavior

@@ -1,0 +1,354 @@
+: "${GWT_BASE:=..}"
+
+# ---------- internals ----------
+
+_gwt_slug() {
+  local s="$1"
+  s="${s//\//-}"
+  s="${s//[^A-Za-z0-9._-]/-}"
+  print -r -- "$s"
+}
+
+_gwt_root() {
+  git rev-parse --show-toplevel 2>/dev/null
+}
+
+_gwt_path_for() {
+  local root="$1" branch="$2"
+  local repo="${root:t}"
+  local slug="$(_gwt_slug "$branch")"
+  print -r -- "${GWT_BASE:A}/${repo}__${slug}"
+}
+
+_gwt_err() { echo "gwt: $*" >&2; }
+
+_gwt_help() {
+  cat <<'EOF'
+gwt — lightweight git worktree helper
+
+USAGE:
+  gwt <branch> [start-point]        Create (or reuse) a worktree and cd into it
+  gwt -t <name> [start-point]       Create a temp worktree (oc/<name>-TIMESTAMP)
+  gwt temp <name> [start-point]     Same as -t
+
+  gwt ls                            List worktrees
+  gwt cd <branch>                   cd into an existing worktree
+  gwt rm <branch|path> [-d]         Remove worktree (optionally delete branch)
+  gwt prune                         Prune stale worktree metadata
+
+  gwt status [--all|-a]             Show git status (current or all worktrees)
+  gwt open [branch|path] [--code]   Open in file manager (or VS Code if --code)
+  gwt rename <old> <new>            Rename branch and (if exists) move its worktree
+  gwt doctor                        Diagnose common worktree problems
+
+  gwt oc <branch> [start]           cd into worktree and run opencode
+
+  gwt help | --help | -h            Show this help
+
+NOTES:
+  • Worktrees live under: $GWT_BASE
+  • Unstaged/staged changes are NOT copied between worktrees
+  • Branch deletion (-d) is force delete
+
+EXAMPLES:
+  gwt feature/foo
+  gwt -t refactor
+  gwt ls
+  gwt status --all
+  gwt open feature/foo --code
+  gwt rename feature/foo feature/bar
+  gwt rm feature/foo -d
+EOF
+}
+
+_gwt_require_repo() {
+  local root="$(_gwt_root)"
+  [[ -z "$root" ]] && { _gwt_err "not inside a git repo"; return 2; }
+  print -r -- "$root"
+}
+
+_gwt_is_worktree_path() {
+  local root="$1" path="$2"
+  git -C "$root" worktree list --porcelain | grep -q "^worktree $path$"
+}
+
+# Extract the worktree path (if any) where a given branch is checked out
+# Prints path or empty
+_gwt_path_for_checked_out_branch() {
+  local root="$1" branch="$2"
+  # Porcelain format groups like:
+  # worktree /path
+  # HEAD <sha>
+  # branch refs/heads/foo
+  local p
+  p="$(git -C "$root" worktree list --porcelain | awk -v br="refs/heads/$branch" '
+    $1=="worktree"{w=$2}
+    $1=="branch" && $2==br{print w; exit}
+  ')"
+  print -r -- "$p"
+}
+
+# ---------- core actions ----------
+
+_gwt_create() {
+  local branch="$1"
+  local start="${2:-HEAD}"
+
+  [[ -z "$branch" ]] && { _gwt_err "branch required"; return 2; }
+
+  local root; root="$(_gwt_require_repo)" || return $?
+  local path; path="$(_gwt_path_for "$root" "$branch")"
+
+  if [[ -d "$path" ]]; then
+    if _gwt_is_worktree_path "$root" "$path"; then
+      cd "$path" || return
+      return 0
+    else
+      _gwt_err "path exists but is not a registered worktree: $path"
+      return 1
+    fi
+  fi
+
+  if git -C "$root" show-ref --verify --quiet "refs/heads/$branch"; then
+    git -C "$root" worktree add "$path" "$branch" || return $?
+  else
+    git -C "$root" worktree add -b "$branch" "$path" "$start" || return $?
+  fi
+
+  cd "$path" || return
+}
+
+_gwt_temp() {
+  local name="$1"
+  local start="${2:-HEAD}"
+  [[ -z "$name" ]] && { _gwt_err "temp name required"; return 2; }
+
+  local ts; ts="$(date +%Y%m%d-%H%M%S)"
+  _gwt_create "oc/${name}-${ts}" "$start"
+}
+
+_gwt_ls() {
+  local root; root="$(_gwt_require_repo)" || return $?
+  git -C "$root" worktree list
+}
+
+_gwt_cd() {
+  local branch="$1"
+  [[ -z "$branch" ]] && { _gwt_err "branch required"; return 2; }
+
+  local root; root="$(_gwt_require_repo)" || return $?
+  local path; path="$(_gwt_path_for "$root" "$branch")"
+
+  if [[ -d "$path" ]] && _gwt_is_worktree_path "$root" "$path"; then
+    cd "$path" || return
+  else
+    _gwt_err "no worktree found for branch: $branch"
+    return 1
+  fi
+}
+
+_gwt_rm() {
+  local target="$1"
+  local flag="$2"
+
+  [[ -z "$target" ]] && { _gwt_err "target required"; return 2; }
+
+  local root; root="$(_gwt_require_repo)" || return $?
+
+  local path branch
+  if [[ "$target" == /* || "$target" == ./* || "$target" == ../* ]]; then
+    path="${target:A}"
+  else
+    branch="$target"
+    path="$(_gwt_path_for "$root" "$branch")"
+  fi
+
+  [[ "${PWD:A}" == "$path" ]] && {
+    _gwt_err "refusing to remove current worktree; cd out first"
+    return 1
+  }
+
+  git -C "$root" worktree remove "$path" || return $?
+
+  if [[ "$flag" == "-d" && -n "$branch" ]]; then
+    git -C "$root" branch -D "$branch"
+  fi
+}
+
+_gwt_prune() {
+  local root; root="$(_gwt_require_repo)" || return $?
+  git -C "$root" worktree prune
+}
+
+_gwt_status() {
+  local mode="$1"
+  if [[ "$mode" == "--all" || "$mode" == "-a" ]]; then
+    local root; root="$(_gwt_require_repo)" || return $?
+    local cur; cur="$(pwd -P)"
+    local wts; wts=("${(@f)$(git -C "$root" worktree list --porcelain | awk '$1=="worktree"{print $2}')}")
+    local p
+    for p in $wts; do
+      echo "==> $p"
+      if [[ -d "$p" ]]; then
+        git -C "$p" status -sb
+      else
+        echo "  (missing on disk)"
+      fi
+      echo
+    done
+    return 0
+  fi
+
+  # default: current directory status
+  git status -sb
+}
+
+_gwt_open() {
+  local target="" mode=""
+  # parse args: [branch|path] [--code]
+  for a in "$@"; do
+    if [[ "$a" == "--code" ]]; then
+      mode="code"
+    elif [[ -z "$target" ]]; then
+      target="$a"
+    else
+      _gwt_err "unknown arg: $a"
+      return 2
+    fi
+  done
+
+  local root; root="$(_gwt_require_repo)" || return $?
+  local path
+
+  if [[ -z "$target" ]]; then
+    path="$(pwd -P)"
+  elif [[ "$target" == /* || "$target" == ./* || "$target" == ../* ]]; then
+    path="${target:A}"
+  else
+    path="$(_gwt_path_for "$root" "$target")"
+  fi
+
+  [[ -d "$path" ]] || { _gwt_err "no such directory: $path"; return 1; }
+
+  if [[ "$mode" == "code" ]]; then
+    if command -v code >/dev/null 2>&1; then
+      command code "$path"
+      return $?
+    else
+      _gwt_err "VS Code 'code' not found; falling back to system open"
+    fi
+  fi
+
+  if command -v open >/dev/null 2>&1; then
+    command open "$path"
+  elif command -v xdg-open >/dev/null 2>&1; then
+    command xdg-open "$path" >/dev/null 2>&1 &
+  elif command -v explorer.exe >/dev/null 2>&1; then
+    command explorer.exe "$(cygpath -w "$path" 2>/dev/null || print -r -- "$path")"
+  else
+    _gwt_err "no opener found (open/xdg-open/explorer.exe)"
+    return 1
+  fi
+}
+
+_gwt_rename() {
+  local old="$1" new="$2"
+  [[ -z "$old" || -z "$new" ]] && { _gwt_err "usage: gwt rename <old> <new>"; return 2; }
+
+  local root; root="$(_gwt_require_repo)" || return $?
+
+  # Ensure old branch exists
+  git -C "$root" show-ref --verify --quiet "refs/heads/$old" || {
+    _gwt_err "branch does not exist: $old"
+    return 1
+  }
+
+  # If old branch is checked out in a worktree, move that worktree to the new derived path
+  local wt_path; wt_path="$(_gwt_path_for_checked_out_branch "$root" "$old")"
+  local new_path; new_path="$(_gwt_path_for "$root" "$new")"
+
+  if [[ -n "$wt_path" ]]; then
+    # Move worktree directory in a git-aware way (keeps metadata consistent)
+    if [[ "$wt_path" != "$new_path" ]]; then
+      git -C "$root" worktree move "$wt_path" "$new_path" || return $?
+    fi
+
+    # Rename branch from within that worktree (safe even if it's the current branch there)
+    git -C "$new_path" branch -m "$old" "$new" || return $?
+  else
+    # Not checked out anywhere (as far as worktrees know); just rename the branch
+    git -C "$root" branch -m "$old" "$new" || return $?
+  fi
+}
+
+_gwt_doctor() {
+  local root; root="$(_gwt_require_repo)" || return $?
+
+  echo "gwt doctor"
+  echo "repo: $root"
+  echo "GWT_BASE: ${GWT_BASE:A}"
+  echo
+
+  # List worktrees and flag missing paths
+  local wts; wts=("${(@f)$(git -C "$root" worktree list --porcelain | awk '$1=="worktree"{print $2}')}")
+  if (( ${#wts[@]} == 0 )); then
+    echo "No worktrees found."
+    return 0
+  fi
+
+  echo "Worktrees:"
+  local p missing=0
+  for p in $wts; do
+    if [[ -d "$p" ]]; then
+      echo "  OK   $p"
+    else
+      echo "  BAD  $p   (missing on disk)"
+      missing=1
+    fi
+  done
+  echo
+
+  # Show prune dry-run to spot stale metadata
+  echo "Prune dry-run (stale metadata candidates):"
+  if git -C "$root" worktree prune -n 2>/dev/null; then
+    :
+  else
+    echo "  (your git may not support: git worktree prune -n)"
+    echo "  Try: git worktree prune"
+  fi
+  echo
+
+  # Basic branch-in-use footgun tip
+  echo "Notes:"
+  echo "  • If branch deletes fail: it's likely checked out in a worktree."
+  echo "    Use: git worktree list  (then remove the worktree or switch it)."
+  if (( missing )); then
+    echo "  • Missing worktree dirs found above."
+    echo "    Usually fix with: git worktree prune"
+  fi
+}
+
+# ---------- dispatcher ----------
+
+gwt() {
+  local cmd="$1"
+  shift || true
+
+  case "$cmd" in
+    "" ) _gwt_help ;;
+    help|-h|--help ) _gwt_help ;;
+    ls ) _gwt_ls ;;
+    cd ) _gwt_cd "$@" ;;
+    rm ) _gwt_rm "$@" ;;
+    prune ) _gwt_prune ;;
+    status ) _gwt_status "$@" ;;
+    open ) _gwt_open "$@" ;;
+    rename ) _gwt_rename "$@" ;;
+    doctor ) _gwt_doctor ;;
+    -t|temp ) _gwt_temp "$@" ;;
+    oc ) _gwt_create "$@" && command opencode ;;
+    * ) _gwt_create "$cmd" "$@" ;;   # default: treat as branch name
+  esac
+}
+# ---------- end ----------
+

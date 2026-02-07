@@ -1,66 +1,68 @@
-#!/usr/bin/env sh
-# git-br-prune [Nd|Nw|Nm]
-# Defaults to 1m (1 month). Respects DRY_RUN=true.
+emulate -L zsh
+setopt localoptions pipefail no_unset
 
-set -eu
-
-# ---- config ---------------------------------------------------------------
-REMOTE="${REMOTE:-origin}"
-PROTECT_REGEX="${PROTECT_REGEX:-^(origin/HEAD|origin/(master|staging|infradev))$}"
-ARG="${1:-1m}"
-# --------------------------------------------------------------------------
+local remote protect_regex arg
+remote="${REMOTE:-origin}"
+protect_regex="${PROTECT_REGEX:-^(origin/HEAD|origin/(master|staging|infradev))$}"
+arg="${1:-1m}"
 
 # Parse Nd/Nw/Nm -> "N day(s)/week(s)/month(s) ago"
-num=${ARG%[mwd]}      # strip the last char
-unit=${ARG#$num}      # the last char (m|w|d)
+local num unit
+num=${arg%[mwd]}
+unit=${arg#$num}
 
 case "$unit" in
   m|w|d) : ;;
-  *) echo "Usage: $(basename "$0") [Nd|Nw|Nm]  (e.g., 10d, 2w, 1m). Default: 1m" >&2; exit 2 ;;
+  *) echo "Usage: git-br-prune [Nd|Nw|Nm]  (e.g., 10d, 2w, 1m). Default: 1m" >&2; return 2 ;;
 esac
 
 # Ensure $num is an integer
 case "$num" in
-  ''|*[!0-9]*) echo "Invalid amount: '$ARG' — use like 10d, 2w, 1m" >&2; exit 2 ;;
+  ''|*[!0-9]*) echo "Invalid amount: '$arg' — use like 10d, 2w, 1m" >&2; return 2 ;;
 esac
 
 # Build a --since string git understands
+local word since
 case "$unit" in
   d) word="day" ;;
   w) word="week" ;;
   m) word="month" ;;
 esac
 [ "$num" -eq 1 ] || word="${word}s"
-SINCE="${num} ${word} ago"
+since="${num} ${word} ago"
 
 # Get remote branches (short names) under $REMOTE, excluding protected ones
+local branches
 branches=$(
-  git for-each-ref "refs/remotes/${REMOTE}" --format='%(refname:short)' \
-  | grep -Ev "$PROTECT_REGEX" || true
+  git for-each-ref "refs/remotes/${remote}" --format='%(refname:short)' \
+  | grep -Ev "$protect_regex" || true
 )
 
 # Nothing to do?
-[ -n "$branches" ] || { echo "No candidate remote branches under ${REMOTE}."; exit 0; }
+[[ -n "$branches" ]] || { echo "No candidate remote branches under ${remote}."; return 0; }
 
-echo "Scanning ${REMOTE} branches inactive since: ${SINCE}"
+echo "Scanning ${remote} branches inactive since: ${since}"
 
 # Read line-by-line safely
 printf '%s\n' "$branches" | while IFS= read -r branch; do
   # Skip weird entries just in case
-  [ -n "$branch" ] || continue
+  [[ -n "$branch" ]] || continue
 
   # Any commits on that remote branch within the time window?
-  recent_count=$(git log --since "$SINCE" -- "$branch" | wc -l | tr -d '[:space:]')
+  local recent_count
+  recent_count=$(git log --since "$since" -- "$branch" | wc -l | tr -d '[:space:]')
   if [ "$recent_count" -eq 0 ]; then
-    remote_branch=${branch#${REMOTE}/}
+    local remote_branch
+    remote_branch=${branch#${remote}/}
     if [ "${DRY_RUN:-}" = "true" ]; then
       echo "[DRY_RUN] Would delete remote branch: ${branch}"
     else
       echo "Deleting remote branch: ${branch}"
-      git push "$REMOTE" --delete "$remote_branch"
+      git push "$remote" --delete "$remote_branch" || return 1
     fi
   fi
 done
 
 # Clean up any refs for deleted branches
-git fetch --prune "$REMOTE"
+git fetch --prune "$remote" || return 1
+return 0

@@ -8,11 +8,6 @@ export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcloud/application_default_
 export EDITOR=nvim
 export KUBE_EDITOR=nvim
 
-# Android
-export ANDROID_HOME="$HOME/Library/Android/sdk"
-export ANDROID_NDK_ROOT="${ANDROID_HOME}/ndk/26.1.10909125"
-export ANDROID_AVD_HOME="$HOME/.android/avd"
-
 # Wasmtime
 export WASMTIME_HOME="$HOME/.wasmtime"
 
@@ -72,6 +67,7 @@ if [[ -n ${HOMEBREW_PREFIX:-} ]]; then
   # zsh-autosuggestions
   ZSH_AUTO="$HOMEBREW_PREFIX/share/zsh-autosuggestions"
   [[ -r "$ZSH_AUTO/zsh-autosuggestions.zsh" ]] && source "$ZSH_AUTO/zsh-autosuggestions.zsh"
+  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=242"
 fi
 
 ##### zfuncs (autoload everything in ~/.zfuncs) ##################################
@@ -124,28 +120,13 @@ alias la="ll -a"
 # zfunc aliases
 alias kpbash="k8s-pod-bash"
 alias kpfd="k8s-pod-forcedelete"
-alias cb-remote="cargo-build-remote"
 
 # zoxide
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
 
 ##### Prompt (powerlevel10k) #####################################################
 
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(os_icon dir go_version rust_version vcs)
-POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status root_indicator background_jobs ram load time)
-POWERLEVEL9K_PROMPT_ADD_NEWLINE=true
-POWERLEVEL9K_PROMPT_ON_NEWLINE=true
-POWERLEVEL9K_RPROMPT_ON_NEWLINE=true
-POWERLEVEL9K_MULTILINE_FIRST_PROMPT_PREFIX="%{%F{249}%}\u250f"
-POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX="%{%F{249}%}\u2517\uf054%{%F{default}%} "
-POWERLEVEL9K_MODE="nerdfont-complete"
-
-# Use brew path if available
-if [[ -n ${HOMEBREW_PREFIX:-} ]] && [[ -r "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
-  source "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme"
-else
-  [[ -r /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme ]] && source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
-fi
+[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
 
 ##### PATH (use the array; de-dup; keep things tidy) #############################
 

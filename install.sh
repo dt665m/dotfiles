@@ -116,6 +116,7 @@ install_shell() {
   sym_link "$ROOT_PATH/zsh/.zshrc" "$HOME/.zshrc"
   sym_link "$ROOT_PATH/zsh/.zfuncs" "$HOME/.zfuncs"
   sym_link "$ROOT_PATH/zsh/.zcustom" "$HOME/.zcustom"
+  sym_link "$ROOT_PATH/zsh/p10k.zsh" "$HOME/.p10k.zsh"
 }
 
 install_tools() {
@@ -137,17 +138,18 @@ install_tools() {
 }
 
 install_terminal() {
-  brew install --cask alacritty || true
-
-  # Install terminfo via tic using a temp copy (don’t write into the .app bundle)
-  tmpfile=$(mktemp)
-  ensure downloader "https://raw.githubusercontent.com/alacritty/alacritty/master/extra/alacritty.info" "$tmpfile"
-  info "setting terminal tic, sudo may be required"
-  sudo tic -xe alacritty,alacritty-direct "$tmpfile"
-  rm -f "$tmpfile"
+  # brew install --cask alacritty || true
+  #
+  # # Install terminfo via tic using a temp copy (don’t write into the .app bundle)
+  # tmpfile=$(mktemp)
+  # ensure downloader "https://raw.githubusercontent.com/alacritty/alacritty/master/extra/alacritty.info" "$tmpfile"
+  # info "setting terminal tic, sudo may be required"
+  # sudo tic -xe alacritty,alacritty-direct "$tmpfile"
+  # rm -f "$tmpfile"
 
   info "configuring terminal"
-  sym_link "$ROOT_PATH/.alacritty.toml" "$HOME/.alacritty.toml"
+  sym_link "$ROOT_PATH/alacritty.toml" "$HOME/.config/alacritty/alacritty.toml"
+  sym_link "$ROOT_PATH/wezterm.lua" "$HOME/.wezterm.lua"
 }
 
 install_neovim() {
