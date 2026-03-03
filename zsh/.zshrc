@@ -136,7 +136,7 @@ path=(
   "$HOME/.foundry/bin"
   "$HOME/.opencode/bin"
   "$WASMTIME_HOME/bin"
-  /Applications/Alacritty.app/Contents/MacOS   # temporary; GUI app bundle bin
+  "$HOME/.bun/bin"
   $path
 )
 typeset -U path

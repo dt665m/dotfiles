@@ -5,4 +5,4 @@
 protocol = "sparse"
 
 # [build]
-# rustc-wrapper = "sccache"
+rustc-wrapper = "sccache"
