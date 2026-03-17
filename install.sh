@@ -94,7 +94,7 @@ install_languages() {
   rustup target add \
     aarch64-apple-ios x86_64-apple-ios aarch64-apple-darwin \
     aarch64-linux-android armv7-linux-androideabi i686-linux-android \
-    wasm32-wasi wasm32-unknown-unknown \
+    wasm32-wasip2 wasm32-unknown-unknown \
     --toolchain nightly
 
   # Rust tooling
@@ -108,7 +108,6 @@ install_languages() {
 
 install_shell() {
   # Plugins/themes/fonts
-  brew tap homebrew/cask-fonts || true
   brew install zsh-syntax-highlighting zsh-autosuggestions powerlevel10k || true
   brew install --cask font-meslo-lg-nerd-font font-fira-code-nerd-font || true
 
@@ -138,17 +137,7 @@ install_tools() {
 }
 
 install_terminal() {
-  # brew install --cask alacritty || true
-  #
-  # # Install terminfo via tic using a temp copy (don’t write into the .app bundle)
-  # tmpfile=$(mktemp)
-  # ensure downloader "https://raw.githubusercontent.com/alacritty/alacritty/master/extra/alacritty.info" "$tmpfile"
-  # info "setting terminal tic, sudo may be required"
-  # sudo tic -xe alacritty,alacritty-direct "$tmpfile"
-  # rm -f "$tmpfile"
-
   info "configuring terminal"
-  sym_link "$ROOT_PATH/alacritty.toml" "$HOME/.config/alacritty/alacritty.toml"
   sym_link "$ROOT_PATH/wezterm.lua" "$HOME/.wezterm.lua"
 }
 
